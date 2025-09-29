@@ -8,3 +8,7 @@ Based on https://colab.research.google.com/github/unslothai/notebooks/blob/main/
 
 
 Dataset: https://huggingface.co/datasets/Thytu/ChessInstruct
+
+POC should be trained on 
+
+- https://huggingface.co/datasets/thewh1teagle/phonikud-phonemes-data
