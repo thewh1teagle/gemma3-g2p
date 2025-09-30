@@ -9,4 +9,5 @@ dependencies = [
     "transformers==4.55.4",
     "trl==0.22.2",
     "unsloth>=2025.9.9",
+    "wandb>=0.22.1",
 ]

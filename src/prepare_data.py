@@ -33,8 +33,8 @@ def main():
     rows = []
     with INPUT_FILE.open("r", encoding="utf-8") as file:
         for count, line in enumerate(file, start=1):
-            if count > LIMIT:
-                break
+            # if count > LIMIT:
+            #     break
             parts = line.strip().split("\t")
             if len(parts) != 2:
                 continue  # skip malformed lines

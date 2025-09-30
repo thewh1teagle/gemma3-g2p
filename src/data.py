@@ -30,8 +30,11 @@ def prepare_dataset(tokenizer):
     return dataset
 
 
-def prepare_dataset_from_csv(tokenizer):
-    dataset = load_dataset("csv", data_files="knesset_phonemes_v1.csv", split="train[:10000]")
+def prepare_dataset_from_csv(tokenizer, file_path, split={
+    "train": "train[:10000]",
+    "eval": "train[:200]"
+}):
+    dataset = load_dataset("csv", data_files=file_path, split=split)
     dataset = dataset.map(
         convert_to_chatml,
     )

@@ -1,8 +1,15 @@
+"""
+# https://wandb.ai/authorize?ref=models
+export WANDB_PROJECT=gemma3
+export WANDB_API_KEY=...
+
+uv run src/train.py --report_to wandb --max_steps 10_000
+"""
 from unsloth import FastModel
 from trl import SFTTrainer, SFTConfig
 import torch
 from data import prepare_dataset, prepare_dataset_from_csv
-
+import argparse
 
 def enable_fast_training():
     # Enable fast training
@@ -64,9 +71,15 @@ def get_chat_template(tokenizer):
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--report_to", type=str, default="none")
+    parser.add_argument("--max_steps", type=int, default=10_000)
+    parser.add_argument("--resume_from_checkpoint", type=str, default=False)
+    args = parser.parse_args()
+
     model, tokenizer = enable_fast_training()
     model = add_lora_adapters(model, tokenizer)
-    dataset = prepare_dataset_from_csv(tokenizer)
+    dataset = prepare_dataset_from_csv(tokenizer, file_path="knesset_phonemes_v2.csv", split='train[:10000]')
 
     # Train the model
     trainer = SFTTrainer(
@@ -80,7 +93,7 @@ def main():
             gradient_accumulation_steps = 1, # Use GA to mimic batch size!
             warmup_steps = 5,
             # num_train_epochs = 1, # Set this for 1 full training run.
-            max_steps = 10_000,
+            max_steps = args.max_steps,
             learning_rate = 5e-5, # Reduce to 2e-5 for long training runs
             logging_steps = 1,
             optim = "adamw_8bit",
@@ -88,7 +101,9 @@ def main():
             lr_scheduler_type = "linear",
             seed = 3407,
             output_dir="outputs",
-            report_to = "none", # Use this for WandB etc
+            report_to = args.report_to, # Use this for WandB etc
+            save_steps=500,
+            save_total_limit=5
         ),
     )
 
@@ -99,7 +114,7 @@ def main():
         response_part = "<start_of_turn>model\n",
     )
 
-    trainer_stats = trainer.train(resume_from_checkpoint=True)
+    trainer_stats = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
 
 
     # Inference
