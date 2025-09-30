@@ -15,3 +15,5 @@ unsloth_compiled_cache/
 gemma-3/
 *.csv
 wandb/
+*.gguf
+Modelfile

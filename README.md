@@ -12,3 +12,10 @@ Dataset: https://huggingface.co/datasets/Thytu/ChessInstruct
 POC should be trained on 
 
 - https://huggingface.co/datasets/thewh1teagle/phonikud-phonemes-data
+
+
+Export to ollama
+
+```console
+curl -fsSL https://ollama.com/install.sh | sh
+```
