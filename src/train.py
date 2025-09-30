@@ -4,6 +4,9 @@ export WANDB_PROJECT=gemma3
 export WANDB_API_KEY=...
 
 uv run src/train.py --report_to wandb --csv_file data.csv
+
+To resume training:
+uv run src/train.py --report_to wandb --csv_file data.csv --resume_from_checkpoint --batch_size 16
 """
 from unsloth import FastModel
 from trl import SFTTrainer, SFTConfig
@@ -74,8 +77,9 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--report_to", type=str, default="none")
     parser.add_argument("--max_steps", type=int, default=10_000)
-    parser.add_argument("--resume_from_checkpoint", type=str, default=False)
+    parser.add_argument("--resume_from_checkpoint", action="store_true")
     parser.add_argument("--csv_file", type=str, default="data.csv")
+    parser.add_argument("--batch_size", type=int, default=8)
     args = parser.parse_args()
 
     model, tokenizer = enable_fast_training()
@@ -90,7 +94,7 @@ def main():
         eval_dataset = None, # Can set up evaluation!
         args = SFTConfig(
             dataset_text_field = "text",
-            per_device_train_batch_size = 8,
+            per_device_train_batch_size = args.batch_size,
             gradient_accumulation_steps = 1, # Use GA to mimic batch size!
             warmup_steps = 5,
             # num_train_epochs = 1, # Set this for 1 full training run.

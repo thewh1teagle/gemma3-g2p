@@ -27,7 +27,7 @@ TASK = (
     "Output Format: A string of IPA phonemes."
 )
 user_message = """
-שלום עולם! מה קורה?
+שלום עולם! מה קורה? הנה משפט קשה קצת, מסגרת, דלת, אופניים.
 """
 # expected_output = """
 # שלום עולם! מה קורה?
