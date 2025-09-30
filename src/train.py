@@ -1,6 +1,7 @@
 from unsloth import FastModel
 from trl import SFTTrainer, SFTConfig
 import torch
+from data import prepare_dataset, prepare_dataset_from_csv
 
 
 def enable_fast_training():
@@ -62,39 +63,10 @@ def get_chat_template(tokenizer):
     return tokenizer
 
 
-def convert_to_chatml(example):
-    return {
-        "conversations": [
-            {"role": "system", "content": example["task"]},
-            {"role": "user", "content": example["input"]},
-            {"role": "assistant", "content": example["expected_output"]}
-        ]
-    }
-
-
-def formatting_prompts_func(examples, tokenizer):
-   convos = examples["conversations"]
-   texts = [tokenizer.apply_chat_template(convo, tokenize = False, add_generation_prompt = False).removeprefix('<bos>') for convo in convos]
-   return { "text" : texts, }
-
-
-
-def load_dataset(tokenizer):
-    # https://huggingface.co/datasets/Thytu/ChessInstruct
-    from datasets import load_dataset
-    dataset = load_dataset("Thytu/ChessInstruct", split = "train[:10000]")
-    dataset = dataset.map(
-        convert_to_chatml,
-    )
-    dataset = dataset.map(formatting_prompts_func, batched = True, fn_kwargs = {"tokenizer": tokenizer})
-    return dataset
-
-
-
 def main():
     model, tokenizer = enable_fast_training()
     model = add_lora_adapters(model, tokenizer)
-    dataset = load_dataset(tokenizer)
+    dataset = prepare_dataset_from_csv(tokenizer)
 
     # Train the model
     trainer = SFTTrainer(
@@ -108,7 +80,7 @@ def main():
             gradient_accumulation_steps = 1, # Use GA to mimic batch size!
             warmup_steps = 5,
             # num_train_epochs = 1, # Set this for 1 full training run.
-            max_steps = 100,
+            max_steps = 1300,
             learning_rate = 5e-5, # Reduce to 2e-5 for long training runs
             logging_steps = 1,
             optim = "adamw_8bit",
@@ -127,7 +99,7 @@ def main():
         response_part = "<start_of_turn>model\n",
     )
 
-    trainer_stats = trainer.train()
+    trainer_stats = trainer.train(resume_from_checkpoint=True)
 
 
     # Inference

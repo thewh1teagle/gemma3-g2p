@@ -338,6 +338,7 @@ name = "gemma3-g2p"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "pandas" },
     { name = "transformers" },
     { name = "trl" },
     { name = "unsloth" },
@@ -345,6 +346,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "pandas", specifier = ">=2.3.2" },
     { name = "transformers", specifier = "==4.55.4" },
     { name = "trl", specifier = "==0.22.2" },
     { name = "unsloth", specifier = ">=2025.9.9" },
