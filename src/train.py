@@ -3,7 +3,7 @@
 export WANDB_PROJECT=gemma3
 export WANDB_API_KEY=...
 
-uv run src/train.py --report_to wandb --max_steps 10_000
+uv run src/train.py --report_to wandb --csv_file data.csv
 """
 from unsloth import FastModel
 from trl import SFTTrainer, SFTConfig
@@ -75,11 +75,12 @@ def main():
     parser.add_argument("--report_to", type=str, default="none")
     parser.add_argument("--max_steps", type=int, default=10_000)
     parser.add_argument("--resume_from_checkpoint", type=str, default=False)
+    parser.add_argument("--csv_file", type=str, default="data.csv")
     args = parser.parse_args()
 
     model, tokenizer = enable_fast_training()
     model = add_lora_adapters(model, tokenizer)
-    dataset = prepare_dataset_from_csv(tokenizer, file_path="knesset_phonemes_v2.csv", split='train[:10000]')
+    dataset = prepare_dataset_from_csv(tokenizer, file_path=args.csv_file, split='train') # change to train[:10000] for smaller dataset
 
     # Train the model
     trainer = SFTTrainer(
