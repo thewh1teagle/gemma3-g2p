@@ -80,7 +80,7 @@ def main():
             gradient_accumulation_steps = 1, # Use GA to mimic batch size!
             warmup_steps = 5,
             # num_train_epochs = 1, # Set this for 1 full training run.
-            max_steps = 1300,
+            max_steps = 10_000,
             learning_rate = 5e-5, # Reduce to 2e-5 for long training runs
             logging_steps = 1,
             optim = "adamw_8bit",
