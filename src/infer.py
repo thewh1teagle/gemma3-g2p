@@ -1,11 +1,20 @@
+"""
+uv run src/infer.py --model_path ./outputs/checkpoint-1300
+"""
 from unsloth import FastModel
 from unsloth.chat_templates import get_chat_template
 from transformers import TextStreamer
 import torch
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--model_path", type=str, default="./outputs/checkpoint-1300")
+args = parser.parse_args()
+
 
 # Load model & tokenizer
 model, tokenizer = FastModel.from_pretrained(
-    model_name = "./outputs/checkpoint-1300",  # local saved folder
+    model_name = args.model_path,  # local saved folder
     load_in_4bit = False,
     load_in_8bit = False,
 )
