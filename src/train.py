@@ -1,5 +1,9 @@
 from unsloth import FastModel
 import torch
+
+
+# Enable fast training
+
 max_seq_length = 2048
 fourbit_models = [
     # 4bit dynamic quants for superior accuracy and low memory use
@@ -26,6 +30,8 @@ model, tokenizer = FastModel.from_pretrained(
 )
 
 
+
+# Add LoRA adapters
 model = FastModel.get_peft_model(
     model,
     r = 128, # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
@@ -41,15 +47,16 @@ model = FastModel.get_peft_model(
     loftq_config = None, # And LoftQ
 )
 
-# Prepare dataset
+
 from unsloth.chat_templates import get_chat_template
 tokenizer = get_chat_template(
     tokenizer,
     chat_template = "gemma3",
 )
+
+# https://huggingface.co/datasets/Thytu/ChessInstruct
 from datasets import load_dataset
 dataset = load_dataset("Thytu/ChessInstruct", split = "train[:10000]")
-
 
 
 def convert_to_chatml(example):
@@ -65,7 +72,6 @@ dataset = dataset.map(
     convert_to_chatml
 )
 
-
 def formatting_prompts_func(examples):
    convos = examples["conversations"]
    texts = [tokenizer.apply_chat_template(convo, tokenize = False, add_generation_prompt = False).removeprefix('<bos>') for convo in convos]
@@ -73,6 +79,9 @@ def formatting_prompts_func(examples):
 
 dataset = dataset.map(formatting_prompts_func, batched = True)
 
+
+
+# Train the model
 from trl import SFTTrainer, SFTConfig
 trainer = SFTTrainer(
     model = model,
@@ -107,5 +116,26 @@ trainer = train_on_responses_only(
 trainer_stats = trainer.train()
 
 
+# Inference
+
+messages = [
+    {'role': 'system','content':dataset['conversations'][10][0]['content']},
+    {"role" : 'user', 'content' : dataset['conversations'][10][1]['content']}
+]
+text = tokenizer.apply_chat_template(
+    messages,
+    tokenize = False,
+    add_generation_prompt = True, # Must add for generation
+).removeprefix('<bos>')
+
+from transformers import TextStreamer
+_ = model.generate(
+    **tokenizer(text, return_tensors = "pt").to("cuda"),
+    max_new_tokens = 125,
+    temperature = 1, top_p = 0.95, top_k = 64,
+    streamer = TextStreamer(tokenizer, skip_prompt = True),
+)
+
+# Save the model
 model.save_pretrained("gemma-3")  # Local saving
 tokenizer.save_pretrained("gemma-3")
