@@ -4,18 +4,15 @@ WIP: code not working yet
 
 Based on https://unsloth.ai/blog/gemma3
 
-Based on https://colab.research.google.com/github/unslothai/notebooks/blob/main/nb/Gemma3_(270M).ipynb
+## Train
 
+See `src/prepare_dataset.py` and `src/train.py`
 
-Dataset: https://huggingface.co/datasets/Thytu/ChessInstruct
+## Infer
 
-POC should be trained on 
+See `src/infer.py`
 
-- https://huggingface.co/datasets/thewh1teagle/phonikud-phonemes-data
+## Export to ollama
 
+See `src/export_gguf.py`
 
-Export to ollama
-
-```console
-curl -fsSL https://ollama.com/install.sh | sh
-```

@@ -1,5 +1,5 @@
 """
-uv run src/infer.py --model_path ./outputs/checkpoint-1300
+uv run src/infer.py --model_path ./outputs/checkpoint-10000
 """
 from unsloth import FastModel
 from unsloth.chat_templates import get_chat_template
@@ -27,7 +27,7 @@ TASK = (
     "Output Format: A string of IPA phonemes."
 )
 user_message = """
-שלום עולם! מה קורה? הנה משפט קשה קצת, מסגרת, דלת, אופניים.
+שלום עולם! מה קורה? הנה משפט קשה קצת, מסגרת, דלת.
 """
 # expected_output = """
 # שלום עולם! מה קורה?
