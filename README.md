@@ -36,3 +36,9 @@ PARAMETER top_k 64
 
 See `src/export_gguf.py`
 
+And finally use
+
+```consoole
+ollama create gemma3-g2p -f ./Modelfile
+```
+
