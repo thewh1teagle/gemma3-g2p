@@ -1,4 +1,7 @@
-#!/usr/bin/env python3
+"""
+wget wget https://huggingface.co/thewh1teagle/gemma3-heb-g2p-gguf/resolve/main/model.gguf
+uv run main.py
+"""
 from llama_cpp import Llama, llama_log_set
 import ctypes
 
