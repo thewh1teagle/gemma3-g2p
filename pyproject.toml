@@ -11,3 +11,9 @@ dependencies = [
     "unsloth>=2025.9.9",
     "wandb>=0.22.1",
 ]
+
+[tool.uv.workspace]
+members = [
+    "gguf-infer",
+    "ollama-infer",
+]
