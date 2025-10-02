@@ -1,5 +1,6 @@
 """
-uv run src/export_gguf.py --model_path ./outputs/checkpoint-7500
+uv run src/export_gguf.py --model_path ./outputs/checkpoint-9500
+uv run hf upload --repo-type model thewh1teagle/gemma3-heb-g2p-gguf ./gemma-3.Q8_0.gguf
 """
 from unsloth import FastModel
 from unsloth.chat_templates import get_chat_template
