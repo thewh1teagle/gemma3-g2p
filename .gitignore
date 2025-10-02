@@ -17,3 +17,4 @@ gemma-3/
 wandb/
 *.gguf
 Modelfile
+gemma3-heb-g2p/

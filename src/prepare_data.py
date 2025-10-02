@@ -3,18 +3,20 @@ wget https://huggingface.co/datasets/thewh1teagle/phonikud-phonemes-data/resolve
 sudo apt install p7zip-full -y
 7z x knesset_phonemes_v1.txt.7z
 
-uv run src/prepare_data.py
+uv run src/prepare_data.py knesset_phonemes_v1.txt data.csv
 """
 
 import re
 import pandas as pd
 from pathlib import Path
+import argparse
+from tqdm import tqdm
 
-# ---------------- CONFIG ---------------- #
-INPUT_FILE = Path("knesset_phonemes_v1.txt")
-OUTPUT_FILE = Path("knesset_phonemes_v1.csv")
-LIMIT = 100_000
-# ---------------------------------------- #
+parser = argparse.ArgumentParser()
+parser.add_argument('--input_file', type=str, default="knesset_phonemes_v1.txt")
+parser.add_argument('--output_file', type=str, default="data.csv")
+parser.add_argument('--limit', type=int, default=-1)
+args = parser.parse_args()
 
 TASK = (
     "Given the following Hebrew sentence, convert it to IPA phonemes.\n\n"
@@ -30,11 +32,12 @@ def remove_diacritics(text: str) -> str:
     return HEBREW_PATTERN.sub("", text)
 
 def main():
+    total_lines = sum(1 for _ in open(args.input_file, encoding="utf-8"))
     rows = []
-    with INPUT_FILE.open("r", encoding="utf-8") as file:
-        for count, line in enumerate(file, start=1):
-            # if count > LIMIT:
-            #     break
+    with Path(args.input_file).open("r", encoding="utf-8") as file:
+        for count, line in tqdm(enumerate(file, start=1), total=total_lines):
+            if args.limit != -1 and count > args.limit:
+                break
             parts = line.strip().split("\t")
             if len(parts) != 2:
                 continue  # skip malformed lines
@@ -49,8 +52,8 @@ def main():
             })
 
     df = pd.DataFrame(rows, columns=["task", "input", "expected_output"])
-    df.to_csv(OUTPUT_FILE, index=False, encoding="utf-8-sig")
-    print(f"Saved {len(df)} rows to {OUTPUT_FILE}")
+    df.to_csv(Path(args.output_file), index=False, encoding="utf-8-sig")
+    print(f"Saved {len(df)} rows to {Path(args.output_file)}")
 
 if __name__ == "__main__":
     main()
