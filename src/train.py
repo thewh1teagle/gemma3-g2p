@@ -7,6 +7,9 @@ uv run src/train.py --report_to wandb --csv_file data.csv
 
 To resume training:
 uv run src/train.py --report_to wandb --csv_file data.csv --resume_from_checkpoint --batch_size 16
+
+To upload:
+uv run hf upload --repo-type model thewh1teagle/gemma3-heb-g2p ./outputs/checkpoint-10000
 """
 from unsloth import FastModel
 from trl import SFTTrainer, SFTConfig
