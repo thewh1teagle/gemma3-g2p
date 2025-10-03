@@ -80,6 +80,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--report_to", type=str, default="none")
     parser.add_argument("--max_steps", type=int, default=10_000)
+    parser.add_argument("--save_steps", type=int, default=500)
     parser.add_argument("--resume_from_checkpoint", action="store_true")
     parser.add_argument("--csv_file", type=str, default="data.csv")
     parser.add_argument("--batch_size", type=int, default=8)
@@ -110,7 +111,7 @@ def main():
             seed = 3407,
             output_dir="outputs",
             report_to = args.report_to, # Use this for WandB etc
-            save_steps=500,
+            save_steps=args.save_steps,
             save_total_limit=5
         ),
     )
