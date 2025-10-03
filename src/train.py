@@ -37,13 +37,14 @@ def enable_fast_training():
     ] # More models at https://huggingface.co/unsloth
 
     model, tokenizer = FastModel.from_pretrained(
-        model_name = "unsloth/gemma-3-270m-it",
+        model_name = "unsloth/gemma-3-4b-it",
         max_seq_length = max_seq_length, # Choose any for long context!
-        load_in_4bit = False,  # 4 bit quantization to reduce memory
+        load_in_4bit = True,  # 4 bit quantization to reduce memory
         load_in_8bit = False, # [NEW!] A bit more accurate, uses 2x memory
         full_finetuning = False, # [NEW!] We have full finetuning now!
         # token = "hf_...", # use one if using gated models
     )
+
     return model, tokenizer
 
 
@@ -52,17 +53,16 @@ def add_lora_adapters(model, tokenizer):
     # Add LoRA adapters
     model = FastModel.get_peft_model(
         model,
-        r = 128, # Choose any number > 0 ! Suggested 8, 16, 32, 64, 128
-        target_modules = ["q_proj", "k_proj", "v_proj", "o_proj",
-                        "gate_proj", "up_proj", "down_proj",],
-        lora_alpha = 128,
-        lora_dropout = 0, # Supports any, but = 0 is optimized
-        bias = "none",    # Supports any, but = "none" is optimized
-        # [NEW] "unsloth" uses 30% less VRAM, fits 2x larger batch sizes!
-        use_gradient_checkpointing = "unsloth", # True or "unsloth" for very long context
+        finetune_vision_layers     = False, # Turn off for just text!
+        finetune_language_layers   = True,  # Should leave on!
+        finetune_attention_modules = True,  # Attention good for GRPO
+        finetune_mlp_modules       = True,  # SHould leave on always!
+
+        r = 8,           # Larger = higher accuracy, but might overfit
+        lora_alpha = 8,  # Recommended alpha == r at least
+        lora_dropout = 0,
+        bias = "none",
         random_state = 3407,
-        use_rslora = False,  # We support rank stabilized LoRA
-        loftq_config = None, # And LoftQ
     )
     return model
 
@@ -99,11 +99,11 @@ def main():
         args = SFTConfig(
             dataset_text_field = "text",
             per_device_train_batch_size = args.batch_size,
-            gradient_accumulation_steps = 1, # Use GA to mimic batch size!
+            gradient_accumulation_steps = 4, # Use GA to mimic batch size!
             warmup_steps = 5,
             # num_train_epochs = 1, # Set this for 1 full training run.
             max_steps = args.max_steps,
-            learning_rate = 5e-5, # Reduce to 2e-5 for long training runs
+            learning_rate = 4e-4, # Reduce to 2e-5 for long training runs
             logging_steps = 1,
             optim = "adamw_8bit",
             weight_decay = 0.01,
