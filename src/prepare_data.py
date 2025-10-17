@@ -3,7 +3,7 @@ wget https://huggingface.co/datasets/thewh1teagle/phonikud-phonemes-data/resolve
 sudo apt install p7zip-full -y
 7z x knesset_phonemes_v1.txt.7z
 
-uv run src/prepare_data.py --input_file knesset_phonemes_v1.txt --output_file data3.csv --limit 10000
+uv run src/prepare_data.py --input_file knesset_phonemes_v1.txt --output_file data.csv --limit 10000
 """
 
 import re
