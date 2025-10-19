@@ -45,7 +45,8 @@ tokenizer.save_pretrained('gemma-3')
 tokenizer = get_chat_template(tokenizer, chat_template="gemma3")
 tokenizer.apply_chat_template(convo, tokenize = False, add_generation_prompt = False)
 # mkdir gemma-3-gguf
-model.save_pretrained_gguf('gemma-3', tokenizer)
+quantization_method = "q8_0"
+model.save_pretrained_gguf('gemma-3', tokenizer, quantization_method=quantization_method)
 
 # save Modelfile
 
