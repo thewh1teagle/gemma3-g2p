@@ -1,0 +1,14 @@
+[project]
+name = "onnx-infer"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "onnxruntime>=1.23.1",
+    "optimum-onnx",
+    "peft>=0.17.1",
+]
+
+[tool.uv.sources]
+optimum-onnx = { git = "https://github.com/thewh1teagle/optimum-onnx", rev = "hebrew1" }

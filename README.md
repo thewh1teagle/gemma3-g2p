@@ -27,6 +27,6 @@ See `gguf-infer/`
 ```console
 mkdir outputs
 uv run hf download thewh1teagle/gemma3-heb-g2p --local-dir ./outputs/checkpoint-10000
-uv run src/prepare_data.py knesset_phonemes_v1.txt data.csv 5000
-uv run src/train.py --report_to wandb --csv_file data.csv --resume_from_checkpoint --batch_size 16
+uv run src/prepare_data.py --input_file raw_data.csv --output_file data.csv
+uv run src/train.py --report_to tensorboard --csv_file data.csv --resume_from_checkpoint --batch_size 16 --max_steps 90000000
 ```

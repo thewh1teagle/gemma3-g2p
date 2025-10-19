@@ -6,7 +6,10 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "huggingface-hub>=0.35.1",
+    "jiwer>=4.0.0",
     "pandas>=2.3.2",
+    "tensorboard>=2.20.0",
+    "tqdm>=4.67.1",
     "transformers==4.55.4",
     "trl==0.22.2",
     "unsloth>=2025.9.9",
@@ -17,4 +20,5 @@ dependencies = [
 members = [
     "gguf-infer",
     "ollama-infer",
+    "onnx-infer",
 ]
