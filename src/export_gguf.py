@@ -4,10 +4,9 @@ uv run hf upload --repo-type model thewh1teagle/gemma3-heb-g2p-gguf ./gemma-3.Q8
 """
 from unsloth import FastModel
 from unsloth.chat_templates import get_chat_template
-from transformers import TextStreamer
-import torch
 import argparse
 from pathlib import Path
+from config import SYSTEM_PROMPT
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_path", type=str, default="./outputs/checkpoint-9500")
@@ -25,14 +24,8 @@ model, tokenizer = FastModel.from_pretrained(
 )
 
 
-TASK = (
-    "Given the following Hebrew sentence, convert it to IPA phonemes.\n\n"
-    "Input Format: A Hebrew sentence.\n"
-    "Output Format: A string of IPA phonemes."
-)
-
 convo = [
-    {'role': 'system','content': TASK},
+    {'role': 'system','content': SYSTEM_PROMPT},
     {'role': 'user','content': 'שלום עולם! מה קורה?'},
 ]
 

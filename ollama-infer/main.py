@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 import ollama
-
-system_message = """Given the following Hebrew sentence, convert it to IPA phonemes.
-Input Format: A Hebrew sentence.
-Output Format: A string of IPA phonemes.
-"""
+from config import SYSTEM_PROMPT
 
 user_prompt = "אז מה דעתך, האם אתה יודע לדבר עברית גם כמו שאני יודע לדבר או שאתה לא?"
 
 # build ollama-style template
 prompt = f"""<start_of_turn>system
-{system_message}<end_of_turn>
+{SYSTEM_PROMPT}<end_of_turn>
 <start_of_turn>user
 {user_prompt}<end_of_turn>
 <start_of_turn>model
@@ -20,7 +16,7 @@ prompt = f"""<start_of_turn>system
 response = ollama.chat(
     model="gemma3-g2p",
     messages=[
-        {"role": "system", "content": system_message},
+        {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_prompt}
     ],
     options={

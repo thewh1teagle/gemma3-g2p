@@ -4,6 +4,7 @@ uv run main.py
 """
 from llama_cpp import Llama, llama_log_set
 import ctypes
+from config import SYSTEM_PROMPT
 
 def my_log_callback(level, message, user_data):
     pass
@@ -19,16 +20,11 @@ llm = Llama(
     n_gpu_layers=-1,  # set -1 to put as many layers as possible on GPU
 )
 
-system_message = """Given the following Hebrew sentence, convert it to IPA phonemes.
-Input Format: A Hebrew sentence.
-Output Format: A string of IPA phonemes.
-"""
-
 user_prompt = "אז מה דעתך, האם אתה יודע לדבר עברית גם כמו שאני יודע לדבר או שאתה לא?"
 
 # build the ollama-style template
 prompt = f"""<start_of_turn>system
-{system_message}<end_of_turn>
+{SYSTEM_PROMPT}<end_of_turn>
 <start_of_turn>user
 {user_prompt}<end_of_turn>
 <start_of_turn>model

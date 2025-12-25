@@ -3,21 +3,23 @@
 export WANDB_PROJECT=gemma3
 export WANDB_API_KEY=...
 
-uv run src/train.py --report_to wandb --csv_file data.csv
+uv run src/train.py --report_to wandb --data_file data.tsv
 
 To resume training:
-uv run src/train.py --report_to wandb --csv_file data.csv --resume_from_checkpoint --batch_size 16
+uv run src/train.py --report_to wandb --data_file data.tsv --resume_from_checkpoint --batch_size 16
+
+With custom weight decay:
+uv run src/train.py --report_to wandb --data_file data.tsv --weight_decay 0.01
 
 To upload:
 uv run hf upload --repo-type model thewh1teagle/gemma3-heb-g2p ./outputs/checkpoint-10000
 """
 from unsloth import FastModel
 from trl import SFTTrainer, SFTConfig
-import torch
-from data import prepare_dataset, prepare_dataset_from_csv
+from data import prepare_dataset_from_tsv
 import argparse
 
-def enable_fast_training():
+def enable_fast_training(full_finetuning=False):
     # Enable fast training
 
     max_seq_length = 2048
@@ -41,7 +43,7 @@ def enable_fast_training():
         max_seq_length = max_seq_length, # Choose any for long context!
         load_in_4bit = False,  # 4 bit quantization to reduce memory
         load_in_8bit = False, # [NEW!] A bit more accurate, uses 2x memory
-        full_finetuning = False, # [NEW!] We have full finetuning now!
+        full_finetuning = full_finetuning, # [NEW!] We have full finetuning now!
         # token = "hf_...", # use one if using gated models
     )
     return model, tokenizer
@@ -82,13 +84,16 @@ def main():
     parser.add_argument("--max_steps", type=int, default=10_000)
     parser.add_argument("--save_steps", type=int, default=500)
     parser.add_argument("--resume_from_checkpoint", action="store_true")
-    parser.add_argument("--csv_file", type=str, default="data.csv")
+    parser.add_argument("--data_file", type=str, default="data.tsv", help="Path to TSV data file (input\\toutput)")
     parser.add_argument("--batch_size", type=int, default=8)
+    parser.add_argument("--weight_decay", type=float, default=0.001)
+    parser.add_argument("--full_finetuning", action="store_true")
     args = parser.parse_args()
 
-    model, tokenizer = enable_fast_training()
+    model, tokenizer = enable_fast_training(full_finetuning=args.full_finetuning)
+    tokenizer = get_chat_template(tokenizer)
     model = add_lora_adapters(model, tokenizer)
-    dataset = prepare_dataset_from_csv(tokenizer, file_path=args.csv_file, split='train') # change to train[:10000] for smaller dataset
+    dataset = prepare_dataset_from_tsv(tokenizer, file_path=args.data_file, split='train') # change to train[:10000] for smaller dataset
 
     # Train the model
     trainer = SFTTrainer(
@@ -106,7 +111,7 @@ def main():
             learning_rate = 5e-5, # Reduce to 2e-5 for long training runs
             logging_steps = 1,
             optim = "adamw_8bit",
-            weight_decay = 0.01,
+            weight_decay = args.weight_decay,
             lr_scheduler_type = "linear",
             seed = 3407,
             output_dir="outputs",

@@ -3,12 +3,12 @@ uv run src/eval.py ./outputs/checkpoint-10000 ./data_eval.csv ./report.json
 """
 from unsloth import FastModel
 from unsloth.chat_templates import get_chat_template
-import torch
 import pandas as pd
 import argparse
 import jiwer
 import json
 from tqdm import tqdm
+from config import SYSTEM_PROMPT
 
 parser = argparse.ArgumentParser()
 parser.add_argument('model_path', type=str)
@@ -28,12 +28,6 @@ tokenizer = get_chat_template(tokenizer, chat_template="gemma3")
 # Load evaluation data
 df = pd.read_csv(args.input_file, sep='\t', header=None, names=['input', 'expected'])
 
-TASK = (
-    "Given the following Hebrew sentence, convert it to IPA phonemes.\n\n"
-    "Input Format: A Hebrew sentence.\n"
-    "Output Format: A string of IPA phonemes."
-)
-
 # Evaluate
 results = []
 total_wer = 0.0
@@ -44,7 +38,7 @@ for idx, row in tqdm(df.iterrows(), total=len(df)):
     expected_output = row['expected']
     
     messages = [
-        {"role": "system", "content": TASK},
+        {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_message},
     ]
     text = tokenizer.apply_chat_template(

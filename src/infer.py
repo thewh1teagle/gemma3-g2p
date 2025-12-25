@@ -4,8 +4,8 @@ uv run src/infer.py --model_path ./outputs/checkpoint-10000
 from unsloth import FastModel
 from unsloth.chat_templates import get_chat_template
 from transformers import TextStreamer
-import torch
 import argparse
+from config import SYSTEM_PROMPT
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--model_path", type=str, default="./outputs/checkpoint-1300")
@@ -21,11 +21,6 @@ model, tokenizer = FastModel.from_pretrained(
 tokenizer = get_chat_template(tokenizer, chat_template="gemma3")
 
 # Example inference
-TASK = (
-    "Given the following Hebrew sentence, convert it to IPA phonemes.\n\n"
-    "Input Format: A Hebrew sentence.\n"
-    "Output Format: A string of IPA phonemes."
-)
 user_message = """
 אתה רוצה את זה? את רוצה את זה? דלת, קורונה, אופנוע, אופניים.
 """
@@ -33,7 +28,7 @@ user_message = """
 # שלום עולם! מה קורה?
 # """
 messages = [
-    {"role": "system", "content": TASK},
+    {"role": "system", "content": SYSTEM_PROMPT},
     {"role": "user", "content": user_message},
 ]
 text = tokenizer.apply_chat_template(
