@@ -92,7 +92,8 @@ def main():
 
     model, tokenizer = enable_fast_training(full_finetuning=args.full_finetuning)
     tokenizer = get_chat_template(tokenizer)
-    model = add_lora_adapters(model, tokenizer)
+    if not args.full_finetuning:
+        model = add_lora_adapters(model, tokenizer)
     dataset = prepare_dataset_from_tsv(tokenizer, file_path=args.data_file, split='train') # change to train[:10000] for smaller dataset
 
     # Train the model
