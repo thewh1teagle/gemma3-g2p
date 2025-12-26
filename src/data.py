@@ -1,14 +1,13 @@
-from unsloth import FastModel
-from trl import SFTTrainer, SFTConfig
-import torch
 from datasets import load_dataset
+from config import SYSTEM_PROMPT
 
 def convert_to_chatml(example):
+    """Add system prompt on-the-fly - no need to store in dataset"""
     return {
         "conversations": [
-            {"role": "system", "content": example["task"]},
+            {"role": "system", "content": SYSTEM_PROMPT},
             {"role": "user", "content": example["input"]},
-            {"role": "assistant", "content": example["expected_output"]}
+            {"role": "assistant", "content": example["output"]}
         ]
     }
 
@@ -30,13 +29,20 @@ def prepare_dataset(tokenizer):
     return dataset
 
 
-def prepare_dataset_from_csv(tokenizer, file_path, split={
-    "train": "train[:10000]",
-    "eval": "train[:200]"
-}):
-    dataset = load_dataset("csv", data_files=file_path, split=split)
-    dataset = dataset.map(
-        convert_to_chatml,
+def prepare_dataset_from_tsv(tokenizer, file_path, split='train'):
+    """Load TSV directly without intermediate CSV preprocessing.
+
+    TSV format: input\\toutput (tab-separated, no header)
+    System prompt is added automatically from config.SYSTEM_PROMPT
+    """
+    dataset = load_dataset(
+        "csv",
+        data_files=file_path,
+        split=split,
+        delimiter="\t",  # TSV uses tabs
+        column_names=["input", "output"],  # Explicit column names
+        header=None  # No header in raw TSV
     )
+    dataset = dataset.map(convert_to_chatml)
     dataset = dataset.map(formatting_prompts_func, batched=True, fn_kwargs={"tokenizer": tokenizer})
     return dataset

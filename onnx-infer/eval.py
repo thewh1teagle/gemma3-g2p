@@ -8,6 +8,7 @@ import argparse
 import jiwer
 import json
 from tqdm import tqdm
+from config import SYSTEM_PROMPT
 
 parser = argparse.ArgumentParser()
 parser.add_argument('model_path', type=str)
@@ -23,12 +24,6 @@ tokenizer = AutoTokenizer.from_pretrained(args.model_path)
 # Load evaluation data
 df = pd.read_csv(args.input_file, sep='\t', header=None, names=['input', 'expected'])
 
-TASK = (
-    "Given the following Hebrew sentence, convert it to IPA phonemes.\n\n"
-    "Input Format: A Hebrew sentence.\n"
-    "Output Format: A string of IPA phonemes."
-)
-
 # Evaluate
 results = []
 total_wer = 0.0
@@ -39,7 +34,7 @@ for idx, row in tqdm(df.iterrows(), total=len(df)):
     expected_output = row['expected']
     
     messages = [
-        {"role": "system", "content": TASK},
+        {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_message},
     ]
     text = tokenizer.apply_chat_template(

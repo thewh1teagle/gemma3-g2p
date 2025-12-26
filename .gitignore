@@ -19,3 +19,5 @@ wandb/
 Modelfile
 gemma3-heb-g2p/
 onnx-infer/gemma3_onnx/
+*.tsv
+report.json

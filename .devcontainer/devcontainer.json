@@ -1,0 +1,25 @@
+{
+  "name": "DGX Spark Training",
+  "dockerFile": "../Dockerfile.dgx-spark",
+  "mounts": [
+    "source=${localWorkspaceFolder},target=/workspace/gemma3-g2p,type=bind",
+    "source=${localEnv:HOME}/.cache/huggingface,target=/root/.cache/huggingface,type=bind",
+    "source=${localEnv:HOME}/.wandb,target=/root/.wandb,type=bind"
+  ],
+  "runArgs": [
+    "--gpus=all",
+    "--net=host",
+    "--ipc=host",
+    "--ulimit", "memlock=-1",
+    "--ulimit", "stack=67108864"
+  ],
+  "containerEnv": {
+    "WANDB_API_KEY": "${localEnv:WANDB_API_KEY}",
+    "WANDB_PROJECT": "gemma3"
+  },
+  "workspaceFolder": "/workspace/gemma3-g2p",
+  "extensions": [
+    "ms-python.python",
+    "ms-python.vscode-pylance"
+  ]
+}

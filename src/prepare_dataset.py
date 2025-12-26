@@ -1,9 +1,18 @@
 """
+Prepare raw phoneme data:
+- Remove diacritics from Hebrew text
+- Filter malformed rows
+- Validate format
+
+Input: Raw TSV with diacritics (graphemes\tphonemes)
+Output: Clean TSV (input\toutput) - NO system prompt column
+
+Usage:
 wget https://huggingface.co/datasets/thewh1teagle/phonikud-phonemes-data/resolve/main/knesset_phonemes_v1.txt.7z
 sudo apt install p7zip-full -y
 7z x knesset_phonemes_v1.txt.7z
 
-uv run src/prepare_data.py --input_file knesset_phonemes_v1.txt --output_file data.csv --limit 10000
+uv run src/prepare_dataset.py --input_file knesset_phonemes_v1.txt --output_file data.tsv --limit 10000
 """
 
 import re
@@ -14,15 +23,9 @@ from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--input_file', type=str, default="knesset_phonemes_v1.txt")
-parser.add_argument('--output_file', type=str, default="data.csv")
+parser.add_argument('--output_file', type=str, default="data.tsv")
 parser.add_argument('--limit', type=int, default=-1)
 args = parser.parse_args()
-
-TASK = (
-    "Given the following Hebrew sentence, convert it to IPA phonemes.\n\n"
-    "Input Format: A Hebrew sentence.\n"
-    "Output Format: A string of IPA phonemes."
-)
 
 # Regex to strip Hebrew diacritics + prefix char
 PREFIX_CHAR = "|"
@@ -45,14 +48,21 @@ def main():
             graphemes, phonemes = parts
             clean_graphemes = remove_diacritics(graphemes)
 
+            # Just write input\toutput - NO system prompt
             rows.append({
-                "task": TASK,
                 "input": clean_graphemes,
-                "expected_output": phonemes,
+                "output": phonemes,
             })
 
-    df = pd.DataFrame(rows, columns=["task", "input", "expected_output"])
-    df.to_csv(Path(args.output_file), index=False, encoding="utf-8-sig")
+    # Save as TSV (no header, just data)
+    df = pd.DataFrame(rows, columns=["input", "output"])
+    df.to_csv(
+        Path(args.output_file),
+        sep="\t",
+        index=False,
+        header=False,  # No header for TSV
+        encoding="utf-8"
+    )
     print(f"Saved {len(df)} rows to {Path(args.output_file)}")
 
 if __name__ == "__main__":

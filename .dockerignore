@@ -1,0 +1,33 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Training outputs (will be mounted separately)
+outputs/
+wandb/
+
+# Data files (will be mounted separately)
+*.tsv
+*.csv
+
+# Misc
+.DS_Store
+*.log

@@ -11,6 +11,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 from optimum.exporters.onnx import onnx_export_from_model
 from optimum.onnxruntime import ORTModelForCausalLM
 import time
+from config import SYSTEM_PROMPT
 
 
 # Load base model and merge with LoRA adapter
@@ -38,16 +39,10 @@ tokenizer.save_pretrained(output_dir)
 # Load the exported ONNX model
 ort_model = ORTModelForCausalLM.from_pretrained(output_dir)
 
-# Chat with instruction-tuned model
-system_message = """Given the following Hebrew sentence, convert it to IPA phonemes.
-Input Format: A Hebrew sentence.
-Output Format: A string of IPA phonemes.
-"""
-
 user_prompt = "אז מה דעתך, האם אתה יודע לדבר עברית גם כמו שאני יודע לדבר או שאתה לא?"
 
 conversation = [
-    {"role": "system", "content": system_message},
+    {"role": "system", "content": SYSTEM_PROMPT},
     {"role": "user", "content": user_prompt}
 ]
 

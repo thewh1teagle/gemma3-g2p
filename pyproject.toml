@@ -5,16 +5,16 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "huggingface-hub>=0.35.1",
+    "huggingface-hub>=0.36.0",
     "jiwer>=4.0.0",
-    "pandas>=2.3.2",
+    "pandas>=2.3.3",
     "tensorboard>=2.20.0",
     "tqdm>=4.67.1",
-    "transformers==4.55.4",
-    "trl==0.22.2",
-    "unsloth>=2025.10.6",
-    "unsloth-zoo>=2025.10.7",
-    "wandb>=0.22.1",
+    "transformers>=4.55.4",
+    "trl>=0.22.2",
+    "unsloth>=2025.12.9",
+    "unsloth-zoo>=2025.12.7",
+    "wandb>=0.23.1",
 ]
 
 [tool.uv.workspace]
