@@ -30,3 +30,13 @@ uv run hf download thewh1teagle/gemma3-heb-g2p --local-dir ./outputs/checkpoint-
 uv run src/prepare_data.py --input_file raw_data.csv --output_file data.csv
 uv run src/train.py --report_to tensorboard --csv_file data.csv --resume_from_checkpoint --batch_size 16 --max_steps 90000000
 ```
+
+## DGX Spark Setup
+
+To fine-tune on DGX Spark, run these commands first:
+
+```console
+uv sync
+uv pip install -U torch torchvision --index-url https://download.pytorch.org/whl/cu130
+export UV_SYNC=0
+```
