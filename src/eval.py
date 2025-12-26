@@ -1,110 +1,129 @@
-"""
-wget https://raw.githubusercontent.com/thewh1teagle/heb-g2p-benchmark/refs/heads/main/gt.tsv -O eval_data.tsv
-uv run src/eval.py ./outputs/checkpoint-10000 ./eval_data.tsv ./report.json
-"""
-from unsloth import FastModel
-from unsloth.chat_templates import get_chat_template
+"""Evaluation utilities for gemma3-g2p training."""
 import pandas as pd
-import argparse
 import jiwer
-import json
-from tqdm import tqdm
+from transformers import TrainerCallback
+import wandb
 from config import SYSTEM_PROMPT
 
-parser = argparse.ArgumentParser()
-parser.add_argument('model_path', type=str)
-parser.add_argument('input_file', type=str)
-parser.add_argument('output_file', type=str)
-args = parser.parse_args()
 
+def run_evaluation(model, tokenizer, eval_file, max_samples=100):
+    """Run evaluation and return WER and CER metrics.
 
-def save_report(results, total_wer, total_cer, num_samples, output_file):
-    """Save evaluation report to JSON file."""
-    report = {
-        "summary": {
-            "mean_wer": total_wer / num_samples if num_samples > 0 else 0.0,
-            "mean_cer": total_cer / num_samples if num_samples > 0 else 0.0,
-            "total_samples": num_samples
-        },
-        "individual": results
+    Args:
+        model: The model to evaluate
+        tokenizer: The tokenizer for the model
+        eval_file: Path to TSV evaluation file
+        max_samples: Maximum number of samples to evaluate (default: 100)
+
+    Returns:
+        Dictionary with eval_wer, eval_cer, and eval_samples
+    """
+    if eval_file is None:
+        return None
+
+    # Load evaluation data
+    try:
+        df = pd.read_csv(eval_file, sep='\t', header=0, usecols=[0, 1])
+        df.columns = ['sentence', 'phonemes']
+    except Exception as e:
+        print(f"Warning: Could not load eval file {eval_file}: {e}")
+        return None
+
+    # Limit number of samples for faster evaluation
+    if len(df) > max_samples:
+        df = df.head(max_samples)
+
+    total_wer = 0.0
+    total_cer = 0.0
+    num_samples = 0
+
+    for idx, row in df.iterrows():
+        user_message = row['sentence']
+        expected_output = row['phonemes']
+
+        messages = [
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {"role": "user", "content": user_message},
+        ]
+        text = tokenizer.apply_chat_template(
+            messages,
+            tokenize=False,
+            add_generation_prompt=True,
+        ).removeprefix("<bos>")
+
+        inputs = tokenizer(text, return_tensors="pt").to("cuda")
+
+        outputs = model.generate(
+            **inputs,
+            max_new_tokens=150,
+            temperature=1.0,
+            top_p=0.95,
+            top_k=64,
+        )
+
+        prediction = tokenizer.decode(outputs[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True).strip()
+
+        wer = jiwer.wer(expected_output, prediction)
+        cer = jiwer.cer(expected_output, prediction)
+
+        total_wer += wer
+        total_cer += cer
+        num_samples += 1
+
+    mean_wer = total_wer / num_samples if num_samples > 0 else 0.0
+    mean_cer = total_cer / num_samples if num_samples > 0 else 0.0
+
+    return {
+        "eval_wer": mean_wer,
+        "eval_cer": mean_cer,
+        "eval_samples": num_samples
     }
-    
-    with open(output_file, 'w', encoding='utf-8') as f:
-        json.dump(report, f, ensure_ascii=False, indent=2)
 
 
-# Load model & tokenizer
-model, tokenizer = FastModel.from_pretrained(
-    model_name = args.model_path,  # local saved folder
-    load_in_4bit = False,
-    load_in_8bit = False,
-)
-tokenizer = get_chat_template(tokenizer, chat_template="gemma3")
+class EvaluationCallback(TrainerCallback):
+    """Custom callback to run evaluation during training."""
 
-# Load evaluation data
-# Read TSV file - handle header row and rename columns for consistency
-df = pd.read_csv(args.input_file, sep='\t', header=0, usecols=[0, 1])
-# Rename columns to standard names (handles various header formats)
-df.columns = ['sentence', 'phonemes']
+    def __init__(self, model, tokenizer, eval_file, eval_steps):
+        """Initialize the evaluation callback.
 
-# Evaluate
-results = []
-total_wer = 0.0
-total_cer = 0.0
+        Args:
+            model: The model to evaluate
+            tokenizer: The tokenizer for the model
+            eval_file: Path to TSV evaluation file
+            eval_steps: Run evaluation every N steps
+        """
+        self.model = model
+        self.tokenizer = tokenizer
+        self.eval_file = eval_file
+        self.eval_steps = eval_steps
+        self.last_eval_step = 0
 
-for idx, row in tqdm(df.iterrows(), total=len(df)):
-    user_message = row['sentence']
-    expected_output = row['phonemes']
-    
-    messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": user_message},
-    ]
-    text = tokenizer.apply_chat_template(
-        messages,
-        tokenize=False,
-        add_generation_prompt=True,
-    ).removeprefix("<bos>")
-    
-    inputs = tokenizer(text, return_tensors="pt").to("cuda")
-    
-    outputs = model.generate(
-        **inputs,
-        max_new_tokens=150,
-        temperature=1.0,
-        top_p=0.95,
-        top_k=64,
-    )
-    
-    prediction = tokenizer.decode(outputs[0][inputs['input_ids'].shape[1]:], skip_special_tokens=True).strip()
-    
-    wer = jiwer.wer(expected_output, prediction)
-    cer = jiwer.cer(expected_output, prediction)
-    
-    total_wer += wer
-    total_cer += cer
-    
-    results.append({
-        "input": user_message,
-        "expected": expected_output,
-        "predicted": prediction,
-        "wer": wer,
-        "cer": cer
-    })
-    
-    # Save report after each iteration
-    num_processed = len(results)
-    save_report(results, total_wer, total_cer, num_processed, args.output_file)
+    def on_step_end(self, args, state, control, **kwargs):
+        """Run evaluation at specified intervals."""
+        if self.eval_file is None or self.eval_steps <= 0:
+            return
 
-# Generate final report
-report = {
-    "summary": {
-        "mean_wer": total_wer / len(df),
-        "mean_cer": total_cer / len(df),
-        "total_samples": len(df)
-    },
-    "individual": results
-}
+        current_step = state.global_step
 
-print(f"Mean WER: {report['summary']['mean_wer']:.4f}")
-print(f"Mean CER: {report['summary']['mean_cer']:.4f}")
+        # Check if it's time to evaluate
+        if current_step - self.last_eval_step >= self.eval_steps:
+            print(f"\nRunning evaluation at step {current_step}...")
+
+            # Run evaluation
+            eval_results = run_evaluation(self.model, self.tokenizer, self.eval_file)
+
+            if eval_results:
+                # Log to wandb if available
+                if wandb.run is not None:
+                    wandb.log({
+                        "eval/wer": eval_results["eval_wer"],
+                        "eval/cer": eval_results["eval_cer"],
+                        "eval/samples": eval_results["eval_samples"],
+                        "train/global_step": current_step
+                    })
+
+                print(f"Evaluation results at step {current_step}:")
+                print(f"  WER: {eval_results['eval_wer']:.4f}")
+                print(f"  CER: {eval_results['eval_cer']:.4f}")
+
+            self.last_eval_step = current_step

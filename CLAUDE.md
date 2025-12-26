@@ -1,4 +1,5 @@
 # Claude Instructions
 
-Please refer to [AGENTS.md](AGENTS.md) for project instructions and coding guidelines.
-
+## Python Execution
+- Always use `uv run` instead of `python` when executing Python scripts
+- Example: `uv run script.py` instead of `python script.py`

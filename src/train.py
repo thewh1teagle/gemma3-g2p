@@ -11,12 +11,16 @@ uv run src/train.py --report_to wandb --data_file data.tsv --resume_from_checkpo
 With custom weight decay:
 uv run src/train.py --report_to wandb --data_file data.tsv --weight_decay 0.01
 
+With evaluation:
+uv run src/train.py --report_to wandb --data_file data.tsv --eval_file eval_data.tsv --eval_steps 2000
+
 To upload:
 uv run hf upload --repo-type model thewh1teagle/gemma3-heb-g2p ./outputs/checkpoint-10000
 """
 from unsloth import FastModel
 from trl import SFTTrainer, SFTConfig
 from data import prepare_dataset_from_tsv
+from eval import EvaluationCallback
 import argparse
 
 def enable_fast_training(full_finetuning=False):
@@ -88,6 +92,8 @@ def main():
     parser.add_argument("--batch_size", type=int, default=8)
     parser.add_argument("--weight_decay", type=float, default=0.001)
     parser.add_argument("--full_finetuning", action="store_true")
+    parser.add_argument("--eval_file", type=str, default=None, help="Path to evaluation TSV file")
+    parser.add_argument("--eval_steps", type=int, default=2000, help="Run evaluation every N steps")
     args = parser.parse_args()
 
     model, tokenizer = enable_fast_training(full_finetuning=args.full_finetuning)
@@ -129,7 +135,18 @@ def main():
         response_part = "<start_of_turn>model\n",
     )
 
-    trainer_stats = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
+    # Add evaluation callback if eval_file is provided
+    if args.eval_file:
+        eval_callback = EvaluationCallback(
+            model=model,
+            tokenizer=tokenizer,
+            eval_file=args.eval_file,
+            eval_steps=args.eval_steps
+        )
+        trainer.add_callback(eval_callback)
+        print(f"Evaluation enabled: will run every {args.eval_steps} steps on {args.eval_file}")
+
+    _trainer_stats = trainer.train(resume_from_checkpoint=args.resume_from_checkpoint)
 
 
     # Inference
